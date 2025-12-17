@@ -3,19 +3,20 @@
  * Displays open ports, services, and known vulnerabilities
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
-import { MotiView } from 'moti';
-import { IDSTheme } from '@/constants/ids-theme';
 import { SeverityChip } from '@/components/shared/severity-chip';
-import { idsApi, Vulnerability, PortInfo, ServiceInfo } from '@/services/api';
+import { IDSTheme } from '@/constants/ids-theme';
+import { idsApi, PortInfo, ServiceInfo, Vulnerability } from '@/services/api';
+import { MotiView } from 'moti';
+import React, { useEffect, useState } from 'react';
+import {
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function VulnerabilitiesScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -201,7 +202,7 @@ export default function VulnerabilitiesScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -258,7 +259,7 @@ export default function VulnerabilitiesScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -269,9 +270,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: IDSTheme.spacing.md,
+    paddingTop: IDSTheme.spacing.xl,
+    paddingBottom: IDSTheme.spacing.xxl,
   },
   header: {
-    marginBottom: IDSTheme.spacing.lg,
+    marginBottom: IDSTheme.spacing.xl,
   },
   title: {
     ...IDSTheme.typography.display,
@@ -467,6 +470,6 @@ const styles = StyleSheet.create({
     color: IDSTheme.colors.text.tertiary,
   },
   bottomSpacer: {
-    height: IDSTheme.spacing.xl,
+    height: IDSTheme.spacing.xxl,
   },
 });

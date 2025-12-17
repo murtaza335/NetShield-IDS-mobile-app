@@ -3,22 +3,23 @@
  * App configuration, connection status, and controls
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Switch,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { IDSTheme } from '@/constants/ids-theme';
 import { StatusBadge, StatusType } from '@/components/shared/status-badge';
-import { idsApi, HealthCheckResponse } from '@/services/api';
+import { IDSTheme } from '@/constants/ids-theme';
+import { HealthCheckResponse, idsApi } from '@/services/api';
 import { wsService } from '@/services/websocket';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useState } from 'react';
+import {
+    Alert,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Switch,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function SettingsScreen() {
   const [apiUrl, setApiUrl] = useState('');
@@ -120,7 +121,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* Header */}
         <View style={styles.header}>
@@ -283,7 +284,7 @@ export default function SettingsScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -294,9 +295,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: IDSTheme.spacing.md,
+    paddingTop: IDSTheme.spacing.xl,
+    paddingBottom: IDSTheme.spacing.xxl,
   },
   header: {
-    marginBottom: IDSTheme.spacing.lg,
+    marginBottom: IDSTheme.spacing.xl,
   },
   title: {
     ...IDSTheme.typography.display,
@@ -451,6 +454,6 @@ const styles = StyleSheet.create({
     color: IDSTheme.colors.text.primary,
   },
   bottomSpacer: {
-    height: IDSTheme.spacing.xl,
+    height: IDSTheme.spacing.xxl,
   },
 });

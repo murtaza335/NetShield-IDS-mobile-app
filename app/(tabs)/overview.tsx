@@ -3,21 +3,22 @@
  * Main dashboard with system status and key metrics
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  Dimensions,
-} from 'react-native';
-import { MotiView } from 'moti';
-import { LineChart } from 'react-native-chart-kit';
-import { IDSTheme } from '@/constants/ids-theme';
-import { StatusBadge, StatusType } from '@/components/shared/status-badge';
 import { MetricCard } from '@/components/shared/metric-card';
-import { idsApi, SystemStatus, DashboardStats, TimelineData } from '@/services/api';
+import { StatusBadge, StatusType } from '@/components/shared/status-badge';
+import { IDSTheme } from '@/constants/ids-theme';
+import { DashboardStats, idsApi, SystemStatus, TimelineData } from '@/services/api';
+import { MotiView } from 'moti';
+import React, { useEffect, useState } from 'react';
+import {
+    Dimensions,
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
+} from 'react-native';
+import { LineChart } from 'react-native-chart-kit';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -144,7 +145,7 @@ export default function OverviewScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -229,7 +230,7 @@ export default function OverviewScreen() {
         {/* Bottom spacing */}
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -243,9 +244,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: IDSTheme.spacing.md,
+    paddingTop: IDSTheme.spacing.xl,
+    paddingBottom: IDSTheme.spacing.xxl,
   },
   header: {
-    marginBottom: IDSTheme.spacing.lg,
+    marginBottom: IDSTheme.spacing.xl,
   },
   title: {
     ...IDSTheme.typography.display,

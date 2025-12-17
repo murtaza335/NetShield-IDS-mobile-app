@@ -3,21 +3,21 @@
  * Real-time alert list with filtering
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
-import { router } from 'expo-router';
-import { IDSTheme } from '@/constants/ids-theme';
 import { AlertCard } from '@/components/shared/alert-card';
-import { SeverityChip, SeverityLevel } from '@/components/shared/severity-chip';
-import { idsApi, Alert } from '@/services/api';
+import { IDSTheme } from '@/constants/ids-theme';
+import { Alert, idsApi } from '@/services/api';
 import { wsService } from '@/services/websocket';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+    FlatList,
+    RefreshControl,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 type FilterType = 'all' | 'high' | 'medium' | 'low';
 
@@ -132,7 +132,7 @@ export default function AlertsScreen() {
   const counts = getCounts();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View>
@@ -185,7 +185,7 @@ export default function AlertsScreen() {
           </View>
         }
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -199,7 +199,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: IDSTheme.spacing.md,
-    paddingTop: IDSTheme.spacing.lg,
+    paddingTop: IDSTheme.spacing.xl,
+    paddingBottom: IDSTheme.spacing.lg,
     backgroundColor: IDSTheme.colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: IDSTheme.colors.border,
@@ -270,7 +271,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: IDSTheme.spacing.md,
-    paddingBottom: IDSTheme.spacing.xxl,
+    paddingBottom: IDSTheme.spacing.xxl + IDSTheme.spacing.lg,
   },
   emptyContainer: {
     alignItems: 'center',

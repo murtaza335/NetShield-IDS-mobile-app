@@ -3,18 +3,19 @@
  * AI-generated security recommendations and analysis
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
-import { MotiView } from 'moti';
 import { IDSTheme } from '@/constants/ids-theme';
-import { idsApi, AIInsight } from '@/services/api';
+import { AIInsight, idsApi } from '@/services/api';
+import { MotiView } from 'moti';
+import React, { useEffect, useState } from 'react';
+import {
+    RefreshControl,
+    SafeAreaView,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function InsightsScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -163,7 +164,7 @@ export default function InsightsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -206,7 +207,7 @@ export default function InsightsScreen() {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -217,9 +218,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: IDSTheme.spacing.md,
+    paddingTop: IDSTheme.spacing.xl,
+    paddingBottom: IDSTheme.spacing.xxl,
   },
   pageHeader: {
-    marginBottom: IDSTheme.spacing.md,
+    marginBottom: IDSTheme.spacing.lg,
   },
   pageTitle: {
     ...IDSTheme.typography.display,
@@ -378,6 +381,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: IDSTheme.spacing.xl,
   },
   bottomSpacer: {
-    height: IDSTheme.spacing.xl,
+    height: IDSTheme.spacing.xxl,
   },
 });
