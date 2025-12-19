@@ -12,13 +12,13 @@ import React, { useEffect, useState } from 'react';
 import {
     Dimensions,
     RefreshControl,
-    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
     View,
 } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
@@ -215,8 +215,8 @@ export default function OverviewScreen() {
             </View>
 
             <MetricCard
-              label="PACKETS ANALYZED"
-              value={stats.packetsAnalyzed.toLocaleString()}
+              label="TOTAL ALERTS"
+              value={stats.totalAlerts.toLocaleString()}
               icon="📊"
               accentColor={IDSTheme.colors.text.secondary}
               delay={350}

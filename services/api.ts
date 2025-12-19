@@ -3,11 +3,11 @@
  * Handles all REST API communications with the IDS backend
  */
 
-import axios, { AxiosInstance, AxiosError } from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 
 // API Configuration
-const API_BASE_URL = 'http://192.168.1.100:5000/api'; // Change to your server IP
+const API_BASE_URL = 'https://ollie-unpersecuting-florencio.ngrok-free.dev'; // Your FastAPI server
 const API_TIMEOUT = 10000;
 
 // Storage keys
@@ -82,82 +82,227 @@ class IDSApiService {
 
   // ===== OVERVIEW / DASHBOARD ENDPOINTS =====
   
-  async getSystemStatus(): Promise<SystemStatus> {
-    const response = await this.client.get('/status');
-    return response.data;
+  /**
+   * Get complete dashboard data (stats, timeline, system status)
+   * Maps to: GET /api/dashboard
+   */
+  async getDashboardData(): Promise<DashboardData> {
+    const response = await this.client.get('/api/dashboard');
+    return this.transformDashboardData(response.data);
   }
 
+  /**
+   * Get system status and info
+   * Maps to: GET /api/system
+   */
+  async getSystemStatus(): Promise<SystemStatus> {
+    const response = await this.client.get('/api/system');
+    return {
+      running: response.data.is_running || false,
+      status: response.data.is_running ? 'secure' : 'warning',
+      riskScore: 0, // Calculate based on alert stats if needed
+      lastUpdate: response.data.timestamp || new Date().toISOString(),
+      interface: response.data.interface || '',
+      uptime: response.data.uptime_seconds || 0,
+      connectedClients: response.data.connected_clients || 0,
+      ngrokUrl: response.data.ngrok_url || null,
+    };
+  }
+
+  /**
+   * Get dashboard statistics
+   * Maps to: GET /api/stats
+   */
   async getDashboardStats(): Promise<DashboardStats> {
-    const response = await this.client.get('/dashboard/stats');
-    return response.data;
+    const response = await this.client.get('/api/stats');
+    const stats = response.data.stats || { total: 0, high: 0, medium: 0, low: 0 };
+    return {
+      totalAlerts: stats.total || 0,
+      highSeverity: stats.high || 0,
+      mediumSeverity: stats.medium || 0,
+      lowSeverity: stats.low || 0,
+      categoryStats: response.data.category_stats || {},
+      alertsTimeline: response.data.alerts_timeline || [],
+    };
+  }
+
+  /**
+   * Transform backend dashboard data to frontend format
+   */
+  private transformDashboardData(data: any): DashboardData {
+    const stats = data.stats || { total: 0, high: 0, medium: 0, low: 0 };
+    return {
+      stats: {
+        totalAlerts: stats.total || 0,
+        highSeverity: stats.high || 0,
+        mediumSeverity: stats.medium || 0,
+        lowSeverity: stats.low || 0,
+      },
+      alertsTimeline: data.alerts_timeline || [],
+      categoryStats: data.category_stats || {},
+      isRunning: data.is_running || false,
+      status: data.status || 'Unknown',
+      interface: data.interface || '',
+      uptimeSeconds: data.uptime_seconds || null,
+      timestamp: data.timestamp || new Date().toISOString(),
+      ngrokUrl: data.ngrok_url || null,
+    };
   }
 
   async getAlertTimeline(minutes: number = 60): Promise<TimelineData[]> {
-    const response = await this.client.get(`/alerts/timeline?minutes=${minutes}`);
-    return response.data;
+    // Use dashboard stats endpoint and extract timeline
+    const response = await this.client.get('/api/stats');
+    const timeline = response.data.alerts_timeline || [];
+    
+    // Transform to TimelineData format
+    return timeline.map((count: number, index: number) => ({
+      timestamp: new Date(Date.now() - (timeline.length - index) * 60000).toISOString(),
+      count: count,
+    }));
   }
 
   async getSeverityDistribution(): Promise<SeverityDistribution> {
-    const response = await this.client.get('/alerts/severity-distribution');
-    return response.data;
+    const response = await this.client.get('/api/stats');
+    const stats = response.data.stats || { high: 0, medium: 0, low: 0 };
+    return {
+      high: stats.high || 0,
+      medium: stats.medium || 0,
+      low: stats.low || 0,
+    };
   }
 
   // ===== ALERTS ENDPOINTS =====
   
+  /**
+   * Get alerts with filtering and pagination
+   * Maps to: GET /api/alerts?limit=100&severity=high&offset=0
+   */
   async getAlerts(params?: AlertQueryParams): Promise<AlertsResponse> {
-    const response = await this.client.get('/alerts', { params });
-    return response.data;
+    const response = await this.client.get('/api/alerts', { 
+      params: {
+        limit: params?.limit || 100,
+        severity: params?.severity,
+        offset: params?.offset || 0,
+      }
+    });
+    
+    // Transform backend alerts to frontend format
+    const alerts = response.data.alerts.map((alert: any) => this.transformAlert(alert));
+    
+    return {
+      alerts,
+      total: response.data.total,
+      page: Math.floor((params?.offset || 0) / (params?.limit || 100)) + 1,
+      pageSize: params?.limit || 100,
+    };
   }
 
-  async getAlertById(alertId: string): Promise<Alert> {
-    const response = await this.client.get(`/alerts/${alertId}`);
-    return response.data;
+  /**
+   * Get alert by ID (search through recent alerts)
+   */
+  async getAlertById(alertId: string): Promise<Alert | null> {
+    const response = await this.client.get('/api/alerts', { params: { limit: 1000 } });
+    const alert = response.data.alerts.find((a: any) => 
+      this.generateAlertId(a) === alertId
+    );
+    return alert ? this.transformAlert(alert) : null;
   }
 
+  /**
+   * Get recent alerts
+   */
   async getRecentAlerts(limit: number = 50): Promise<Alert[]> {
-    const response = await this.client.get(`/alerts/recent?limit=${limit}`);
-    return response.data;
+    const response = await this.client.get('/api/alerts', { params: { limit } });
+    return response.data.alerts.map((alert: any) => this.transformAlert(alert));
+  }
+
+  /**
+   * Clear all alerts
+   * Maps to: POST /api/clear
+   */
+  async clearAlerts(): Promise<void> {
+    await this.client.post('/api/clear');
+  }
+
+  /**
+   * Transform backend alert format to frontend Alert type
+   */
+  private transformAlert(alert: any): Alert {
+    return {
+      id: this.generateAlertId(alert),
+      timestamp: alert.timestamp,
+      signature: alert.signature || 'Unknown Signature',
+      category: alert.category || 'Unknown',
+      severity: alert.severity_tag as 'high' | 'medium' | 'low',
+      srcIp: alert.src_ip || '',
+      srcPort: parseInt(alert.src_port) || 0,
+      destIp: alert.dest_ip || '',
+      destPort: parseInt(alert.dest_port) || 0,
+      protocol: 'TCP', // Backend doesn't provide this, default to TCP
+      action: 'alert',
+    };
+  }
+
+  /**
+   * Generate unique ID for alert (backend doesn't provide IDs)
+   */
+  private generateAlertId(alert: any): string {
+    const random = Math.random().toString(36).substring(2, 9);
+    return `${alert.timestamp}_${alert.src_ip}_${alert.src_port}_${alert.dest_ip}_${alert.dest_port}_${random}`.replace(/[^a-zA-Z0-9]/g, '_');
   }
 
   // ===== VULNERABILITIES ENDPOINTS =====
+  // Note: Backend doesn't provide these endpoints yet
+  // These are placeholder methods that return empty data
   
   async getVulnerabilities(): Promise<Vulnerability[]> {
-    const response = await this.client.get('/vulnerabilities');
-    return response.data;
+    // TODO: Implement when backend adds this endpoint
+    console.warn('Vulnerabilities endpoint not implemented in backend');
+    return [];
   }
 
   async getOpenPorts(): Promise<PortInfo[]> {
-    const response = await this.client.get('/network/ports');
-    return response.data;
+    // TODO: Implement when backend adds this endpoint
+    console.warn('Open ports endpoint not implemented in backend');
+    return [];
   }
 
   async getServices(): Promise<ServiceInfo[]> {
-    const response = await this.client.get('/network/services');
-    return response.data;
+    // TODO: Implement when backend adds this endpoint
+    console.warn('Services endpoint not implemented in backend');
+    return [];
   }
 
   // ===== AI INSIGHTS ENDPOINTS =====
+  // Note: Backend doesn't provide these endpoints yet
   
   async getAIInsights(): Promise<AIInsight[]> {
-    const response = await this.client.get('/ai/insights');
-    return response.data;
+    // TODO: Implement when backend adds this endpoint
+    console.warn('AI Insights endpoint not implemented in backend');
+    return [];
   }
 
   async acknowledgeInsight(insightId: string): Promise<void> {
-    await this.client.post(`/ai/insights/${insightId}/acknowledge`);
+    // TODO: Implement when backend adds this endpoint
+    console.warn('Acknowledge insight endpoint not implemented in backend');
   }
 
   // ===== HEALTH CHECK =====
   
+  /**
+   * Health check endpoint
+   * Maps to: GET /api/health
+   */
   async healthCheck(): Promise<HealthCheckResponse> {
     try {
       const start = Date.now();
-      const response = await this.client.get('/health');
+      const response = await this.client.get('/api/health');
       const latency = Date.now() - start;
       return {
-        status: 'connected',
+        status: response.data.status === 'healthy' ? 'connected' : 'disconnected',
         latency,
-        version: response.data.version,
+        isRunning: response.data.is_running,
+        timestamp: response.data.timestamp,
       };
     } catch (error) {
       return {
@@ -166,6 +311,15 @@ class IDSApiService {
         error: (error as APIError).message,
       };
     }
+  }
+
+  /**
+   * Get API root info
+   * Maps to: GET /
+   */
+  async getApiInfo(): Promise<any> {
+    const response = await this.client.get('/');
+    return response.data;
   }
 }
 
@@ -183,6 +337,10 @@ export interface SystemStatus {
   riskScore: number;
   lastUpdate: string;
   suricataVersion?: string;
+  interface?: string;
+  uptime?: number;
+  connectedClients?: number;
+  ngrokUrl?: string | null;
 }
 
 export interface DashboardStats {
@@ -190,8 +348,25 @@ export interface DashboardStats {
   highSeverity: number;
   mediumSeverity: number;
   lowSeverity: number;
-  activeSessions: number;
-  packetsAnalyzed: number;
+  categoryStats?: { [key: string]: number };
+  alertsTimeline?: number[];
+}
+
+export interface DashboardData {
+  stats: {
+    totalAlerts: number;
+    highSeverity: number;
+    mediumSeverity: number;
+    lowSeverity: number;
+  };
+  alertsTimeline: number[];
+  categoryStats: { [key: string]: number };
+  isRunning: boolean;
+  status: string;
+  interface: string;
+  uptimeSeconds: number | null;
+  timestamp: string;
+  ngrokUrl: string | null;
 }
 
 export interface TimelineData {
@@ -279,6 +454,8 @@ export interface HealthCheckResponse {
   latency: number;
   version?: string;
   error?: string;
+  isRunning?: boolean;
+  timestamp?: string;
 }
 
 // Export singleton instance
