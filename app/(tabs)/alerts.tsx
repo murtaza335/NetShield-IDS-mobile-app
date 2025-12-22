@@ -163,7 +163,7 @@ export default function AlertsScreen() {
             index={index}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `${item.id}_${index}`}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl

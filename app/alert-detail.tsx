@@ -3,19 +3,19 @@
  * Detailed view of a single alert with AI mitigation advice
  */
 
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import { useLocalSearchParams, router } from 'expo-router';
-import { IDSTheme } from '@/constants/ids-theme';
 import { SeverityChip, SeverityLevel } from '@/components/shared/severity-chip';
-import { idsApi, Alert } from '@/services/api';
+import { IDSTheme } from '@/constants/ids-theme';
+import { Alert, idsApi } from '@/services/api';
+import { router, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
 export default function AlertDetailScreen() {
   const { alertId } = useLocalSearchParams();

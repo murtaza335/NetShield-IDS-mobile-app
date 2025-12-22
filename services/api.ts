@@ -247,8 +247,8 @@ class IDSApiService {
    * Generate unique ID for alert (backend doesn't provide IDs)
    */
   private generateAlertId(alert: any): string {
-    const random = Math.random().toString(36).substring(2, 9);
-    return `${alert.timestamp}_${alert.src_ip}_${alert.src_port}_${alert.dest_ip}_${alert.dest_port}_${random}`.replace(/[^a-zA-Z0-9]/g, '_');
+    // Create a deterministic ID based on alert properties
+    return `${alert.timestamp}_${alert.src_ip}_${alert.src_port}_${alert.dest_ip}_${alert.dest_port}_${alert.signature}`.replace(/[^a-zA-Z0-9]/g, '_');
   }
 
   // ===== VULNERABILITIES ENDPOINTS =====
