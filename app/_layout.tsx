@@ -5,9 +5,9 @@ import 'react-native-reanimated';
 
 import { IDSTheme } from '@/constants/ids-theme';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+// export const unstable_settings = {
+//   anchor: '(tabs)',
+// };
 
 // Custom dark theme for NetShield
 const NetShieldTheme = {
